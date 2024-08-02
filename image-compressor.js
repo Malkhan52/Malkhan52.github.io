@@ -3,6 +3,13 @@ const MAX_HEIGHT = 180;
 const MIME_TYPE = "image/jpeg";
 const QUALITY = 0.7;
 
+const html5QrCode = new Html5Qrcode(/* element id */ "reader");
+// File based scanning
+const qrCodeScannerSection = document.getElementById('qr-code-scanner');
+const serialNumberInput = document.getElementById('serial-number-input');
+const qrScanningBrewerImg = document.getElementById('qr-scanning-brewer-img');
+const defaultBrewerImg = document.getElementById('defalut-brewer-img');
+
 const input = document.getElementById("qr-input-file");
 input.addEventListener('change', ev => {
     if (ev.target.files.length == 0) {
@@ -31,13 +38,30 @@ input.addEventListener('change', ev => {
       // Handle the compressed image. es. upload or save in local state
       displayInfo('Original file', file);
       displayInfo('Compressed file', blob);
+      const newFile = new File([blob], "compressed_image.png",{type:"image/png", lastModified:new Date().getTime()});
+      startScanningFile(newFile);
     },
     MIME_TYPE,
     QUALITY);
-
     document.getElementById("root").append(canvas);
   };
 });
+
+function startScanningFile(imageFile) {
+    html5QrCode.scanFile(imageFile, true)
+        .then(decodedText => {
+            // success, use decodedText
+            console.log(decodedText);
+            serialNumberInput.value = decodedText;
+            qrScanningBrewerImg.style.display = "none";
+            qrCodeScannerSection.style.display = "none";
+            defaultBrewerImg.style.display = "block";
+        })
+        .catch(err => {
+            // failure, handle it.
+            console.log(`Error scanning file. Reason: ${err}`)
+        });
+}
 
 function calculateSize(img, maxWidth, maxHeight) {
   let width = img.width;
