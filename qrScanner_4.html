@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+<style>
+    .scanner-btn {
+        background: #3B2B2F;
+        height: 50px;
+        width: 350px;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 15px;
+        line-height: 42px;
+        color: white;
+        
+    }
+    #serial-number-input {
+        width: 350px;
+        height: 50px;
+        border-radius: 25px;
+        border: 1px solid #AA8066;
+        padding-left: 20px;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 20.28px;
+    }
+    #serial-number-input::placeholder {
+        color: #AA8066;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 20.28px;
+        text-align: left;
+    }
+    #serial-number-box {
+        padding-top: 40px;
+    }
+    #defalut-brewer-img {
+        display: none;
+    }
+    #scanning-section{
+        height: 300px;
+        display: none;
+    }
+</style>
+<body>
+    <h1>QR Code Scanner</h1>
+    <div>
+        <span id="errorMsg"></span>
+    </div>
+    <div id="scanning-section">
+        <div id="reader" style="width: 300px;"></div>
+    </div>
+    <div>
+        <div id="qr-scanning-brewer-img">
+            <img height="200" src="qr-scanning-brewer-img.jpeg" />
+        </div>
+        <div id="defalut-brewer-img">
+            <img height="250" src="default-brewer-img.jpeg" />
+        </div>
+        <div id="qr-code-scanner">
+            <button onclick="startScanning()" class="scanner-btn">SCAN QR CODE To Register</button>
+        </div>
+        <div id="serial-number-box">
+            <input id="serial-number-input" type="text" placeholder="Serial Number" value=""/>
+        </div>
+    </div>
+    <script>
+        const html5QrCode = new Html5Qrcode(/* element id */ "reader");
+        // File based scanning
+        const fileinput = document.getElementById('qr-input-file');
+        const qrCodeScannerSection = document.getElementById('qr-code-scanner');
+        const serialNumberInput = document.getElementById('serial-number-input');
+        const qrScanningBrewerImg = document.getElementById('qr-scanning-brewer-img');
+        const defaultBrewerImg = document.getElementById('defalut-brewer-img');
+        const scanningSection = document.getElementById('scanning-section');
+
+        const PERMISSION_DENIED = 'Error getting userMedia, error = NotAllowedError: Permission denied';
+        function startScanning() {
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                stopScanning();
+                console.log('decodedText: ', decodedText);
+                console.log('decodedResult: ', decodedResult);
+                serialNumberInput.value = decodedText;
+                qrScanningBrewerImg.style.display = "none";
+                qrCodeScannerSection.style.display = "none";
+                defaultBrewerImg.style.display = "block";
+                scanningSection.style.display = "none";
+            };
+            const qrCodeErrorCallback = (errorMessage, error) => {
+                // console.log('error message: ', errorMessage);
+                // console.log('error obj: ', error);
+            };
+            const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+
+            // If you want to prefer front camera
+            // html5QrCode.start({ facingMode: "user" }, config, qrCodeSuccessCallback);
+
+            // If you want to prefer back camera
+            scanningSection.style.display = "block";
+            qrScanningBrewerImg.style.display = "none";
+            qrCodeScannerSection.style.display = "none";
+            // qrScanningBrewerImg.style.visibility = "hidden";
+            // qrCodeScannerSection.style.visibility = "hidden";
+            
+            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback, qrCodeErrorCallback).catch((error) => {
+                // console.log('error catch: ', error, typeof(error));
+                if (error === PERMISSION_DENIED) {
+                    console.log('denied!');
+                    askForPermission();
+                    stopScanning();
+                }
+            });
+
+            // Select front camera or fail with `OverconstrainedError`.
+            // html5QrCode.start({ facingMode: { exact: "user"} }, config, qrCodeSuccessCallback);
+
+            // Select back camera or fail with `OverconstrainedError`.
+            // html5QrCode.start({ facingMode: { exact: "environment"} }, config, qrCodeSuccessCallback);
+        }
+        function askForPermission(){
+            // This method will trigger user permissions
+            Html5Qrcode.getCameras().then(devices => {
+            /**
+             * devices would be an array of objects of type:
+             * { id: "id", label: "label" }
+             */
+            if (devices && devices.length) {
+                var cameraId = devices[0].id;
+                // .. use this to start scanning.
+                console.log('cameraId: ', cameraId);
+            }
+            }).catch(err => {
+            // handle err
+                console.log('asking for permission: ', err);
+                stopScanning();
+            });
+        }
+        function stopScanning() {
+            html5QrCode.stop().then((ignore) => {
+            // QR Code scanning is stopped.
+            console.log('stopped: ', ignore);
+            }).catch((err) => {
+                console.log('stop error: ', err);
+            // Stop failed, handle it.
+            });
+        }
+    </script>
+</body>
+</html>

@@ -8,16 +8,25 @@
 </head>
 <body>
     <h1>QR Code Scanner</h1>
+    <div>
+        <span id="errorMsg"></span>
+    </div>
     <div id="reader" width="400px"></div>
     <button  onclick="startScanning()">Scan QR</button>
     <button  onclick="stopScanning()">Stop</button>
     <script>
-        const html5QrCode = new Html5Qrcode("reader");
+        const html5QrCode = new Html5Qrcode("reader", true);
+        const errorMsg = document.getElementById('errorMsg');
+        const PERMISSION_DENIED = 'Error getting userMedia, error = NotAllowedError: Permission denied';
         function startScanning() {
             const qrCodeSuccessCallback = (decodedText, decodedResult) => {
                 console.log('decodedText: ', decodedText);
                 console.log('decodedResult: ', decodedResult);
                 alert(`decodedText: ${decodedText}`);
+            };
+            const qrCodeErrorCallback = (errorMessage, error) => {
+                console.log('error message: ', errorMessage);
+                console.log('error obj: ', error);
             };
             const config = { fps: 10, qrbox: { width: 300, height: 300 } };
 
@@ -25,13 +34,38 @@
             // html5QrCode.start({ facingMode: "user" }, config, qrCodeSuccessCallback);
 
             // If you want to prefer back camera
-            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback, qrCodeErrorCallback).catch((error) => {
+                console.log('error catch: ', error, typeof(error));
+                if (error === PERMISSION_DENIED) {
+                    console.log('denied!');
+                    askForPermission();
+                    stopScanning();
+                }
+            });
 
             // Select front camera or fail with `OverconstrainedError`.
             // html5QrCode.start({ facingMode: { exact: "user"} }, config, qrCodeSuccessCallback);
 
             // Select back camera or fail with `OverconstrainedError`.
             // html5QrCode.start({ facingMode: { exact: "environment"} }, config, qrCodeSuccessCallback);
+        }
+        function askForPermission(){
+            // This method will trigger user permissions
+            Html5Qrcode.getCameras().then(devices => {
+            /**
+             * devices would be an array of objects of type:
+             * { id: "id", label: "label" }
+             */
+            if (devices && devices.length) {
+                var cameraId = devices[0].id;
+                // .. use this to start scanning.
+                console.log('cameraId: ', cameraId);
+            }
+            }).catch(err => {
+            // handle err
+                console.log('asking for permission: ', err);
+                stopScanning();
+            });
         }
         function stopScanning() {
             html5QrCode.stop().then((ignore) => {
