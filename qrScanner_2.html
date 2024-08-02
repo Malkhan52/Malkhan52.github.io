@@ -88,7 +88,13 @@
         }
 
         const imageFile = e.target.files[0];
-        console.log('imageFile: ', JSON.stringify(imageFile));
+        console.log('imageFile length: ', e.target.files.length);
+        console.log('imageFile: ', imageFile);
+        console.log('imageFile: ', imageFile.name);
+        console.log('imageFile: ', imageFile.size);
+        console.log('imageFile: ', imageFile.type);
+        console.log('imageFile: ', imageFile.lastModified);
+        console.log('imageFile: ', imageFile.webkitRelativePath);
         // Scan QR Code
         html5QrCode.scanFile(imageFile, false)
         .then(decodedText => {
