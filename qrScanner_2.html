@@ -54,7 +54,7 @@
     <div>
         <span id="errorMsg"></span>
     </div>
-    <div id="reader" width="4032px"></div>
+    <div id="reader" width="400px"></div>
     <div>
         <div id="qr-scanning-brewer-img">
             <img height="200" src="qr-scanning-brewer-img.jpeg" />
@@ -65,7 +65,7 @@
         <div id="qr-code-scanner">
             <button class="scanner-btn">
                 <label class="scanner-label" for="qr-input-file" >SCAN QR CODE To Register</label>
-                <input type="file" id="qr-input-file" accept="image/*" capture>
+                <input type="file" id="qr-input-file" accept="image/*">
             </button>
         </div>
         <div id="serial-number-box">
@@ -96,7 +96,7 @@
         console.log('imageFile: ', imageFile.lastModified);
         console.log('imageFile: ', imageFile.webkitRelativePath);
         // Scan QR Code
-        html5QrCode.scanFile(imageFile, false)
+        html5QrCode.scanFile(imageFile, true)
         .then(decodedText => {
             // success, use decodedText
             console.log(decodedText);
