@@ -39,6 +39,13 @@ input.addEventListener('change', ev => {
       displayInfo('Original file', file);
       displayInfo('Compressed file', blob);
       const newFile = new File([blob], "compressed_image.png",{type:"image/png", lastModified:new Date().getTime()});
+      
+      console.log('newFile: ', newFile);
+      console.log('newFile: ', newFile.name);
+      console.log('newFile: ', newFile.size);
+      console.log('newFile: ', newFile.type);
+      console.log('newFile: ', newFile.lastModified);
+      console.log('newFile: ', newFile.webkitRelativePath);
       startScanningFile(newFile);
     },
     MIME_TYPE,
