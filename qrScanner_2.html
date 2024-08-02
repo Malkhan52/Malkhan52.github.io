@@ -65,7 +65,7 @@
         <div id="qr-code-scanner">
             <button class="scanner-btn">
                 <label class="scanner-label" for="qr-input-file" >SCAN QR CODE To Register</label>
-                <input type="file" id="qr-input-file" accept="image/*" capture>
+                <input type="file" id="qr-input-file" accept="image/*,video/*" capture>
             </button>
         </div>
         <div id="serial-number-box">
@@ -73,7 +73,7 @@
         </div>
     </div>
     <script>
-        const html5QrCode = new Html5Qrcode(/* element id */ "reader");
+        const html5QrCode = new Html5Qrcode(/* element id */ "reader", true);
         // File based scanning
         const fileinput = document.getElementById('qr-input-file');
         const qrCodeScannerSection = document.getElementById('qr-code-scanner');
@@ -88,6 +88,7 @@
         }
 
         const imageFile = e.target.files[0];
+        console.log('imageFile: ', imageFile);
         // Scan QR Code
         html5QrCode.scanFile(imageFile, false)
         .then(decodedText => {
