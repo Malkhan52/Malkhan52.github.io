@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Scanner</title>
-    <!-- <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script> -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
+    <script src="html5-qrcode.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="model-pop-up.css" />
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" type="text/javascript"></script> -->
 </head>
 <style>
     .scanner-btn {
@@ -46,6 +47,9 @@
         height: 300px;
         display: none;
     }
+    #errorMsg {
+        color: red;
+    }
 </style>
 <body>
     <h1>QR Code Scanner</h1>
@@ -69,6 +73,24 @@
             <input id="serial-number-input" type="text" placeholder="Serial Number" value=""/>
         </div>
     </div>
+    <button onclick="stopScanning()" id="myBtn">Stop Camera</button>
+    
+    <button onclick="pauseScanning()" id="myBtn3">Pause Camera</button>
+    
+    <button onclick="resumeScanning()" id="myBtn3">Resume Camera</button>
+    <button onclick="openModal()" id="myBtn2">Open Modal</button>
+    
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+        <span onclick="closeModal()" class="close">&times;</span>
+        <p id="modalBody"></p>
+    </div>
+
+    </div>
+
     <script>
         const html5QrCode = new Html5Qrcode(/* element id */ "reader");
         // File based scanning
@@ -78,7 +100,8 @@
         const qrScanningBrewerImg = document.getElementById('qr-scanning-brewer-img');
         const defaultBrewerImg = document.getElementById('defalut-brewer-img');
         const scanningSection = document.getElementById('scanning-section');
-
+        const errorMsg = document.getElementById('errorMsg');
+        
         const PERMISSION_DENIED = 'Error getting userMedia, error = NotAllowedError: Permission denied';
         function startScanning() {
             const qrCodeSuccessCallback = (decodedText, decodedResult) => {
@@ -92,8 +115,13 @@
                 scanningSection.style.display = "none";
             };
             const qrCodeErrorCallback = (errorMessage, error) => {
-                // console.log('error message: ', errorMessage);
+                console.log('error message: ', errorMessage);
                 // console.log('error obj: ', error);
+                errorMsg.innerText = errorMessage;
+                modalBody.innerText = errorMessage;
+                
+            const data5 = html5QrCode.getState();
+            console.log('data5: ', data5);
             };
             const config = { fps: 10, qrbox: { width: 200, height: 200 } };
 
@@ -107,12 +135,32 @@
             // qrScanningBrewerImg.style.visibility = "hidden";
             // qrCodeScannerSection.style.visibility = "hidden";
             
+
             html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback, qrCodeErrorCallback).catch((error) => {
-                // console.log('error catch: ', error, typeof(error));
+                console.log('error catch: ', error, typeof(error));
+                errorMsg.innerText = error;
+                modalBody.innerText = error;
+                openModal();
+            //     const data1 = html5QrCode.getRunningTrackCameraCapabilities();
+            //     console.log('data1: ', data1);
+
+                
+            // const data5 = html5QrCode.getCameras();
+            // console.log('data5: ', data5);
+
+            // const data2 = html5QrCode.getRunningTrackCapabilities();
+            // console.log('data2: ', data2);
+
+            // const data3 = html5QrCode.getRunningTrackSettings();
+            // console.log('data3: ', data3);
+            
+            // const data4 = html5QrCode.getRunningTrackSettings();
+            // console.log('data4: ', data4);
+
                 if (error === PERMISSION_DENIED) {
                     console.log('denied!');
                     askForPermission();
-                    stopScanning();
+                    // stopScanning();
                 }
             });
 
@@ -137,18 +185,28 @@
             }).catch(err => {
             // handle err
                 console.log('asking for permission: ', err);
-                stopScanning();
+                // stopScanning();
             });
         }
         function stopScanning() {
             html5QrCode.stop().then((ignore) => {
             // QR Code scanning is stopped.
             console.log('stopped: ', ignore);
+            
             }).catch((err) => {
                 console.log('stop error: ', err);
             // Stop failed, handle it.
             });
         }
+
+        function pauseScanning() {
+            html5QrCode.pause();
+        }
+        function resumeScanning() {
+            html5QrCode.resume();
+        }
     </script>
+    <script src="model-popup.js" type="text/javascript"></script>
+    
 </body>
 </html>
