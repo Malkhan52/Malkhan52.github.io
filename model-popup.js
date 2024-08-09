@@ -18,7 +18,7 @@ modal.style.display = "block";
 
 function closeModal(){
     modal.style.display = "none";
-    document.location.reload();
+    // document.location.reload();
 }
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function(event) {
