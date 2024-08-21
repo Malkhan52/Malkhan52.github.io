@@ -127,9 +127,20 @@
             const type = event.target.type;
             const angle = event.target.angle;
             console.log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
-            stopScanning();
-            setTimeout(() => startScanning(), 2000);
+            restartScanning();
         });
+
+        function restartScanning() {
+            console.log('restartScanning!!');
+            html5QrCode.stop().then((ignore) => {
+            // QR Code scanning is stopped.
+            console.log('stopped: ', ignore);
+            startScanning();
+            }).catch((err) => {
+                console.log('stop error: ', err);
+            // Stop failed, handle it.
+            });
+        }
         
         function startScanning() {
             console.log('startScanning!!');
