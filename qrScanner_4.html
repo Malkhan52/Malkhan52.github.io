@@ -128,8 +128,7 @@
             const angle = event.target.angle;
             console.log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
             stopScanning();
-            setTimeout(() => console.log("sleeping!"), 2000);
-            startScanning();
+            setTimeout(() => startScanning(), 2000);
         });
         
         function startScanning() {
