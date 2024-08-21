@@ -45,11 +45,21 @@
         display: none;
     }
     #scanning-section{
-        height: 300px;
+        min-height: 300px;
         display: none;
     }
     #errorMsg {
         color: red;
+    }
+    @media (orientation: landscape) {
+        #reader {
+            max-width: 50%;
+        }
+    }
+    @media (orientation: portrait) {
+        #reader {
+            max-width: 100%;
+        }
     }
 </style>
 <body>
@@ -59,7 +69,7 @@
     </div>
     <div id="loader"></div>
     <div id="scanning-section">
-        <div id="reader" style="width: 100%;"></div>
+        <div id="reader"></div>
     </div>
     <div>
         <div id="qr-scanning-brewer-img">
