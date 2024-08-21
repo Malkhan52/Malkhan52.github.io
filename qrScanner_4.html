@@ -128,10 +128,12 @@
             const angle = event.target.angle;
             console.log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
             stopScanning();
+            setTimeout(() => console.log("sleeping!"), 2000);
             startScanning();
         });
         
         function startScanning() {
+            console.log('startScanning!!');
             showPageLoader();
             const qrCodeSuccessCallback = (decodedText, decodedResult) => {
                 if (decodedText === '7978282568') {
