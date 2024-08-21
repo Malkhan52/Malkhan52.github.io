@@ -52,6 +52,10 @@
         color: red;
     }
     @media (orientation: landscape) {
+        #scanning-section{
+            height: auto;
+            max-height: 100%;
+        }
         #reader {
             max-width: 50%;
         }
@@ -145,7 +149,7 @@
             const data5 = html5QrCode.getState();
             console.log('data5: ', data5);
             };
-            const config = { fps: 10, qrbox: { width: 300, height: 300 }, aspectRatio:1.0 };
+            const config = { fps: 10, qrbox: { width: 300, height: 300 } };
 
             // If you want to prefer front camera
             // html5QrCode.start({ facingMode: "user" }, config, qrCodeSuccessCallback);
