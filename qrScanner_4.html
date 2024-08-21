@@ -122,6 +122,15 @@
         const errorMsg = document.getElementById('errorMsg');
         
         const PERMISSION_DENIED = 'Error getting userMedia, error = NotAllowedError: Permission denied';
+        
+        window.screen.orientation.addEventListener("change", (event) => {
+            const type = event.target.type;
+            const angle = event.target.angle;
+            console.log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
+            stopScanning();
+            startScanning();
+        });
+        
         function startScanning() {
             showPageLoader();
             const qrCodeSuccessCallback = (decodedText, decodedResult) => {
@@ -150,7 +159,7 @@
             const data5 = html5QrCode.getState();
             console.log('data5: ', data5);
             };
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            const config = { fps: 10, qrbox: { width: 200, height: 200 } };
 
             // If you want to prefer front camera
             // html5QrCode.start({ facingMode: "user" }, config, qrCodeSuccessCallback);
