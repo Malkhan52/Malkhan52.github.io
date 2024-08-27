@@ -10,6 +10,19 @@
     <ul id="camera-list"></ul>
 
     <script>
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            const constraints = {
+                'video': true,
+                'audio': false
+            }
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    console.log('Got MediaStream:', stream);
+                })
+                .catch(error => {
+                    console.error('Error accessing media devices.', error);
+                });
+        }
         // Check if mediaDevices is supported
         if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
             navigator.mediaDevices.enumerateDevices()
