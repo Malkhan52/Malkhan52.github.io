@@ -57,7 +57,8 @@
         display: flex;
     }
     #scanning-section{
-        height: 100vw;
+        width: 100vw;
+        aspect-ratio: 16/9;
     }
     @media (orientation: landscape) {
         #scanning-section{
@@ -65,11 +66,11 @@
             max-height: 700px; */
             /* height: auto; */
             display: none;
-            width: 100vh;
+            width: 100vw;
         }
         #reader {
             /* width: 100%; */
-            height: 100vh;
+            width: 100vw;
         }
     }
     @media (orientation: portrait) {
@@ -112,7 +113,7 @@
             <input id="serial-number-input" type="text" placeholder="Serial Number" value=""/>
         </div>
     </div>
-    <button onclick="stopScanning()" id="myBtn">Stop Camera</button>
+    <!-- <button onclick="stopScanning()" id="myBtn">Stop Camera</button>
     
     <button onclick="pauseScanning()" id="myBtn3">Pause Camera</button>
     
@@ -120,7 +121,10 @@
     <button onclick="openModal()" id="myBtn2">Open Modal</button>
     <button onclick="showPageLoader()" id="myBtn4">Page Loader</button>
     <button onclick="getAllDevices()" id="myBtn5">Get All Devices</button>
-    
+     -->
+     <button onclick="handleAspectRatio(1.0)" >Aspect Ratio 1:1</button>
+     <button onclick="handleAspectRatio(1.777778)">Aspect Ratio 16:9</button>
+     <button onclick="handleAspectRatio(1.333334)">Aspect Ratio 4:3</button> 
     <!-- The Modal -->
     <div id="myModal" class="modal">
 
@@ -133,6 +137,11 @@
     </div>
 
     <script>
+    function handleAspectRatio(value) {
+        window.localStorage.setItem('aspectRatio', value);
+        restartScanning();
+    }
+    // window.addEventListener('resize', restartScanning);
     function getCameras() {
       try {
         if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
@@ -243,10 +252,11 @@
             const data5 = html5QrCode.getState();
             console.log('data5: ', data5);
             };
-            const screenWidth = window.screen.width * 0.8;
-            const screenHeight = window.screen.height * 0.8;
-
-            const config = { fps: 10, qrbox: { width: 300, height: 300 }, aspectRatio: 1.0 };
+            const aspectRatio = window.localStorage.getItem('aspectRatio') || 1.777778;
+            const screenWidth = window.screen.width * 0.7;
+            const screenHeight = window.screen.width / aspectRatio;
+            const focusArea = Math.floor(screenHeight * 0.7);
+            const config = { fps: 10, qrbox: { width: focusArea, height: focusArea }, aspectRatio };
 
             // If you want to prefer front camera
             // html5QrCode.start({ facingMode: "user" }, config, qrCodeSuccessCallback);
