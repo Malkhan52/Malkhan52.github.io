@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Scanner</title>
+    <script src="qr-scanner.umd.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="model-pop-up.css" />
+    <link rel="stylesheet" href="page-loader.css" />
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" type="text/javascript"></script> -->
+</head>
+<style>
+    .scanner-btn {
+        background: #3B2B2F;
+        height: 50px;
+        width: 350px;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 15px;
+        line-height: 42px;
+        color: white;
+        
+    }
+    #serial-number-input {
+        width: 350px;
+        height: 50px;
+        border-radius: 25px;
+        border: 1px solid #AA8066;
+        padding-left: 20px;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 20.28px;
+    }
+    #serial-number-input::placeholder {
+        color: #AA8066;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 20.28px;
+        text-align: left;
+    }
+    #serial-number-box {
+        padding-top: 40px;
+    }
+    #defalut-brewer-img {
+        display: none;
+    }
+    #errorMsg {
+        color: red;
+    }
+    
+    /* #reader {
+            max-width: 400px;
+        } */
+    #scanning-section-container {
+        justify-content: center;
+        width: 100%;
+        display: flex;
+    }
+    #scanning-section{
+        height: 100vw;
+    }
+    @media (orientation: landscape) {
+        #scanning-section{
+            /* min-height: 500px;
+            max-height: 700px; */
+            /* height: auto; */
+            display: none;
+            width: 100vh;
+        }
+        #reader {
+            /* width: 100%; */
+            height: 100vh;
+        }
+    }
+    @media (orientation: portrait) {
+        #scanning-section{
+            /* min-height: 400px; */
+            /* height: auto; */
+            display: none;
+            width: 100vw;
+        }
+        #reader {
+            width: 100vw;
+        }
+    }
+</style>
+<body>
+    <h1>QR Code Scanner</h1>
+    <div>
+        <span id="video-devices"></span><br/>
+        <p id="camera-count">Checking for cameras...</p>
+        <!-- <span id="errorMsg"></span> -->
+    </div>
+    <div id="loader"></div>
+    <div id="scanning-section-container">
+        <div id="scanning-section">
+            <video id="reader"></video>
+        </div>
+    </div>
+    <div>
+        <div id="qr-scanning-brewer-img">
+            <img height="200" src="https://cdn.mos.cms.futurecdn.net/Y8oFodGLyPJZRtKjyFjBLN-1920-80.jpg.webp" />
+        </div>
+        <div id="defalut-brewer-img">
+            <img height="250" src="https://cdn.mos.cms.futurecdn.net/Y8oFodGLyPJZRtKjyFjBLN-1920-80.jpg.webp" />
+        </div>
+        <div id="qr-code-scanner">
+            <button onclick="startScanning()" class="scanner-btn">SCAN QR CODE To Register</button>
+        </div>
+        <div id="serial-number-box">
+            <input id="serial-number-input" type="text" placeholder="Serial Number" value=""/>
+        </div>
+    </div>
+    <button onclick="stopScanning()" id="myBtn">Stop Camera</button>
+    
+    <button onclick="pauseScanning()" id="myBtn3">Pause Camera</button>
+    
+    <button onclick="resumeScanning()" id="myBtn3">Resume Camera</button>
+    <button onclick="openModal()" id="myBtn2">Open Modal</button>
+    <button onclick="showPageLoader()" id="myBtn4">Page Loader</button>
+    <button onclick="getAllDevices()" id="myBtn5">Get All Devices</button>
+    
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+        <span onclick="closeModal()" class="close">&times;</span>
+        <p id="modalBody"></p>
+    </div>
+
+    </div>
+
+    <script>
+    async function getCameras() {
+      try {
+        // Get all media devices
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        console.log('device: ', devices);
+        // Filter for video input devices (cameras)
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        
+        // Get the number of cameras
+        const cameraCount = videoDevices.length;
+        const videoDeviceElm = document.getElementById('video-devices');
+        videoDeviceElm.innerText = JSON.stringify(videoDevices);
+        console.log('videoDevices: ', videoDevices);
+        // Update the page with the camera count
+        const cameraCountElement = document.getElementById('camera-count');
+        if (cameraCount === 0) {
+          cameraCountElement.textContent = 'No cameras detected.';
+        } else if (cameraCount === 1) {
+          cameraCountElement.textContent = 'One camera detected.';
+        } else {
+          cameraCountElement.textContent = `Multiple cameras detected: ${cameraCount}`;
+        }
+      } catch (error) {
+        console.error('Error accessing media devices:', error);
+        document.getElementById('camera-count').textContent = 'Error accessing media devices.';
+      }
+    }
+
+    // Call the getCameras function when the page loads
+    window.onload = getCameras;
+
+        let html5QrCode;
+        // File based scanning
+        const fileinput = document.getElementById('qr-input-file');
+        const qrCodeScannerSection = document.getElementById('qr-code-scanner');
+        const serialNumberInput = document.getElementById('serial-number-input');
+        const qrScanningBrewerImg = document.getElementById('qr-scanning-brewer-img');
+        const defaultBrewerImg = document.getElementById('defalut-brewer-img');
+        const scanningSection = document.getElementById('scanning-section');
+        const errorMsg = document.getElementById('errorMsg');
+        
+        const PERMISSION_DENIED = 'Error getting userMedia, error = NotAllowedError: Permission denied';
+        
+        window.screen.orientation.addEventListener("change", (event) => {
+            const type = event.target.type;
+            const angle = event.target.angle;
+            console.log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
+            restartScanning();
+        });
+
+        function restartScanning() {
+            console.log('restartScanning!!');
+            html5QrCode.stop().then((ignore) => {
+            // QR Code scanning is stopped.
+            console.log('stopped: ', ignore);
+
+            startScanning();
+            }).catch((err) => {
+                console.log('stop error: ', err);
+            // Stop failed, handle it.
+            });
+        }
+        
+        function startScanning() {
+            const video = document.getElementById('reader');
+            console.log('startScanning!!');
+            showPageLoader();
+            const qrCodeSuccessCallback = (decodedText) => {
+                if (decodedText === '7978282568') {
+                    stopScanning();
+                    console.log('decodedText: ', decodedText);
+                    // console.log('decodedResult: ', decodedResult);
+                    serialNumberInput.value = decodedText;
+                    qrScanningBrewerImg.style.display = "none";
+                    qrCodeScannerSection.style.display = "none";
+                    defaultBrewerImg.style.display = "block";
+                    scanningSection.style.display = "none";
+                } else {
+                    pauseScanning();
+                    modalBody.innerText = 'opps! \n Not a valid serial number. \n Please scan a valid keurig brewer QR Code.';
+                    openModal();
+                }
+            };
+            const qrCodeErrorCallback = (errorMessage) => {
+                hidePageLoader();
+                console.log('error message: ', errorMessage);
+                errorMsg.innerText = errorMessage;
+            }
+            const screenWidth = window.screen.width * 0.8;
+            const screenHeight = window.screen.height * 0.8;
+
+            scanningSection.style.display = "block";
+            qrScanningBrewerImg.style.display = "none";
+            qrCodeScannerSection.style.display = "none";
+            html5QrCode = new QrScanner(video, result => qrCodeSuccessCallback(result), {
+                onDecodeError: error => qrCodeErrorCallback(error),
+                highlightScanRegion: true,
+                highlightCodeOutline: true,
+            });
+            
+            html5QrCode.start().catch((error) => {
+                console.log('error catch: ', error, typeof(error));
+                errorMsg.innerText = error;
+                modalBody.innerText = error;
+                openModal();
+                if (error === PERMISSION_DENIED) {
+                    console.log('denied!');
+                    askForPermission();
+                    // stopScanning();
+                }
+            });
+        }
+        function askForPermission(){
+            // This method will trigger user permissions
+            Html5Qrcode.getCameras().then(devices => {
+            /**
+             * devices would be an array of objects of type:
+             * { id: "id", label: "label" }
+             */
+            if (devices && devices.length) {
+                var cameraId = devices[0].id;
+                // .. use this to start scanning.
+                console.log('cameraId: ', cameraId);
+            }
+            }).catch(err => {
+            // handle err
+                console.log('asking for permission: ', err);
+                // stopScanning();
+            });
+        }
+        function stopScanning() {
+            html5QrCode.stop().then((ignore) => {
+            // QR Code scanning is stopped.
+            console.log('stopped: ', ignore);
+            
+            }).catch((err) => {
+                console.log('stop error: ', err);
+            // Stop failed, handle it.
+            });
+        }
+
+        function pauseScanning() {
+            html5QrCode.pause();
+        }
+        function resumeScanning() {
+            html5QrCode.resume();
+        }
+
+        function getAllDevices(){
+            if (!navigator.mediaDevices?.enumerateDevices) {
+                console.log("enumerateDevices() not supported.");
+                } else {
+                // List cameras and microphones.
+                navigator.mediaDevices
+                    .enumerateDevices()
+                    .then((devices) => {
+                    devices.forEach((device) => {
+                        console.log('device: ', device);
+                        console.log(`${device.kind}: ${device.label} id = ${device.deviceId}`);
+                    });
+                    })
+                    .catch((err) => {
+                    console.error(`${err.name}: ${err.message}`);
+                    });
+                }
+        }
+    </script>
+    <script src="model-popup.js" type="text/javascript"></script>
+    <script src="handle-pageloaer.js" type="text/javascript"></script>
+    
+</body>
+</html>

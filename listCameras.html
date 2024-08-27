@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera List</title>
+</head>
+<body>
+    <h1>Available Cameras</h1>
+    <ul id="camera-list"></ul>
+
+    <script>
+        // Check if mediaDevices is supported
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+            navigator.mediaDevices.enumerateDevices()
+                .then(function(devices) {
+                    const cameraList = document.getElementById('camera-list');
+
+                    devices.forEach(function(device) {
+                        if (device.kind === 'videoinput') {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = `Camera: ${device.label || 'Unnamed Camera'} (ID: ${device.deviceId})`;
+                            cameraList.appendChild(listItem);
+                        }
+                    });
+
+                    if (!cameraList.hasChildNodes()) {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = 'No cameras found';
+                        cameraList.appendChild(listItem);
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Error occurred while enumerating devices:', err);
+                });
+        } else {
+            console.error('navigator.mediaDevices.enumerateDevices() not supported.');
+        }
+    </script>
+</body>
+</html>
