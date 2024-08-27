@@ -47,34 +47,55 @@
     #errorMsg {
         color: red;
     }
+    
+    /* #reader {
+            max-width: 400px;
+        } */
+    #scanning-section-container {
+        justify-content: center;
+        width: 100%;
+        display: flex;
+    }
+    #scanning-section{
+        height: 100vw;
+    }
     @media (orientation: landscape) {
         #scanning-section{
-            min-height: 500px;
-            max-height: 700px;
+            /* min-height: 500px;
+            max-height: 700px; */
+            /* height: auto; */
             display: none;
+            width: 100vh;
         }
         #reader {
-            max-width: 50%;
+            /* width: 100%; */
+            height: 100vh;
         }
     }
     @media (orientation: portrait) {
         #scanning-section{
-            min-height: 400px;
+            /* min-height: 400px; */
+            /* height: auto; */
             display: none;
+            width: 100vw;
         }
         #reader {
-            max-width: 100%;
+            width: 100vw;
         }
     }
 </style>
 <body>
     <h1>QR Code Scanner</h1>
     <div>
-        <span id="errorMsg"></span>
+        <span id="video-devices"></span><br/>
+        <p id="camera-count">Checking for cameras...</p>
+        <!-- <span id="errorMsg"></span> -->
     </div>
     <div id="loader"></div>
-    <div id="scanning-section">
-        <div id="reader"></div>
+    <div id="scanning-section-container">
+        <div id="scanning-section">
+            <div id="reader"></div>
+        </div>
     </div>
     <div>
         <div id="qr-scanning-brewer-img">
@@ -111,6 +132,37 @@
     </div>
 
     <script>
+    async function getCameras() {
+      try {
+        // Get all media devices
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        console.log('device: ', devices);
+        // Filter for video input devices (cameras)
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        
+        // Get the number of cameras
+        const cameraCount = videoDevices.length;
+        const videoDeviceElm = document.getElementById('video-devices');
+        videoDeviceElm.innerText = JSON.stringify(videoDevices);
+        console.log('videoDevices: ', videoDevices);
+        // Update the page with the camera count
+        const cameraCountElement = document.getElementById('camera-count');
+        if (cameraCount === 0) {
+          cameraCountElement.textContent = 'No cameras detected.';
+        } else if (cameraCount === 1) {
+          cameraCountElement.textContent = 'One camera detected.';
+        } else {
+          cameraCountElement.textContent = `Multiple cameras detected: ${cameraCount}`;
+        }
+      } catch (error) {
+        console.error('Error accessing media devices:', error);
+        document.getElementById('camera-count').textContent = 'Error accessing media devices.';
+      }
+    }
+
+    // Call the getCameras function when the page loads
+    window.onload = getCameras;
+
         const html5QrCode = new Html5Qrcode(/* element id */ "reader");
         // File based scanning
         const fileinput = document.getElementById('qr-input-file');
@@ -135,6 +187,7 @@
             html5QrCode.stop().then((ignore) => {
             // QR Code scanning is stopped.
             console.log('stopped: ', ignore);
+
             startScanning();
             }).catch((err) => {
                 console.log('stop error: ', err);
@@ -171,7 +224,10 @@
             const data5 = html5QrCode.getState();
             console.log('data5: ', data5);
             };
-            const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+            const screenWidth = window.screen.width * 0.8;
+            const screenHeight = window.screen.height * 0.8;
+
+            const config = { fps: 10, qrbox: { width: 300, height: 300 }, aspectRatio: 1.0 };
 
             // If you want to prefer front camera
             // html5QrCode.start({ facingMode: "user" }, config, qrCodeSuccessCallback);
