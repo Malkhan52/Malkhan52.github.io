@@ -89,6 +89,7 @@
     <div>
         <span id="video-devices"></span><br/>
         <p id="camera-count">Checking for cameras...</p>
+        <ul id="camera-list"></ul>
         <!-- <span id="errorMsg"></span> -->
     </div>
     <div id="loader"></div>
@@ -132,36 +133,54 @@
     </div>
 
     <script>
-    async function getCameras() {
+    function getCameras() {
       try {
-        // Get all media devices
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        console.log('device: ', devices);
-        // Filter for video input devices (cameras)
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
-        
-        // Get the number of cameras
-        const cameraCount = videoDevices.length;
-        const videoDeviceElm = document.getElementById('video-devices');
-        videoDeviceElm.innerText = JSON.stringify(videoDevices);
-        console.log('videoDevices: ', videoDevices);
-        // Update the page with the camera count
-        const cameraCountElement = document.getElementById('camera-count');
-        if (cameraCount === 0) {
-          cameraCountElement.textContent = 'No cameras detected.';
-        } else if (cameraCount === 1) {
-          cameraCountElement.textContent = 'One camera detected.';
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+            navigator.mediaDevices.enumerateDevices()
+                .then(function(devices) {
+                    const cameraList = document.getElementById('camera-list');
+                    let camerasCount = 0;
+                    devices.forEach(function(device) {
+                        if (device.kind === 'videoinput') {
+                            camerasCount += 1;
+                            const listItem = document.createElement('li');
+                            listItem.textContent = `Camera: ${device.label || 'Unnamed Camera'} (ID: ${device.deviceId})`;
+                            cameraList.appendChild(listItem);
+                        }
+                    });
+                    
+                    document.getElementById('video-devices').innerText = `camerasCount: ${camerasCount}`;
+                    if (!cameraList.hasChildNodes()) {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = 'No cameras found';
+                        cameraList.appendChild(listItem);
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Error occurred while enumerating devices:', err);
+                });
         } else {
-          cameraCountElement.textContent = `Multiple cameras detected: ${cameraCount}`;
+            console.error('navigator.mediaDevices.enumerateDevices() not supported.');
         }
       } catch (error) {
         console.error('Error accessing media devices:', error);
         document.getElementById('camera-count').textContent = 'Error accessing media devices.';
       }
     }
-
-    // Call the getCameras function when the page loads
-    window.onload = getCameras;
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            const constraints = {
+                'video': true,
+                'audio': false
+            }
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    console.log('Got MediaStream:', stream);
+                    getCameras();
+                })
+                .catch(error => {
+                    console.error('Error accessing media devices.', error);
+                });
+        }
 
         const html5QrCode = new Html5Qrcode(/* element id */ "reader");
         // File based scanning
