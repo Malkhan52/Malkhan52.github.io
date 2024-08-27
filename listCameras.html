@@ -18,36 +18,36 @@
             navigator.mediaDevices.getUserMedia(constraints)
                 .then(stream => {
                     console.log('Got MediaStream:', stream);
+                    // Check if mediaDevices is supported
+                    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                        navigator.mediaDevices.enumerateDevices()
+                            .then(function(devices) {
+                                const cameraList = document.getElementById('camera-list');
+
+                                devices.forEach(function(device) {
+                                    if (device.kind === 'videoinput') {
+                                        const listItem = document.createElement('li');
+                                        listItem.textContent = `Camera: ${device.label || 'Unnamed Camera'} (ID: ${device.deviceId})`;
+                                        cameraList.appendChild(listItem);
+                                    }
+                                });
+
+                                if (!cameraList.hasChildNodes()) {
+                                    const listItem = document.createElement('li');
+                                    listItem.textContent = 'No cameras found';
+                                    cameraList.appendChild(listItem);
+                                }
+                            })
+                            .catch(function(err) {
+                                console.error('Error occurred while enumerating devices:', err);
+                            });
+                    } else {
+                        console.error('navigator.mediaDevices.enumerateDevices() not supported.');
+                    }
                 })
                 .catch(error => {
                     console.error('Error accessing media devices.', error);
                 });
-        }
-        // Check if mediaDevices is supported
-        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-            navigator.mediaDevices.enumerateDevices()
-                .then(function(devices) {
-                    const cameraList = document.getElementById('camera-list');
-
-                    devices.forEach(function(device) {
-                        if (device.kind === 'videoinput') {
-                            const listItem = document.createElement('li');
-                            listItem.textContent = `Camera: ${device.label || 'Unnamed Camera'} (ID: ${device.deviceId})`;
-                            cameraList.appendChild(listItem);
-                        }
-                    });
-
-                    if (!cameraList.hasChildNodes()) {
-                        const listItem = document.createElement('li');
-                        listItem.textContent = 'No cameras found';
-                        cameraList.appendChild(listItem);
-                    }
-                })
-                .catch(function(err) {
-                    console.error('Error occurred while enumerating devices:', err);
-                });
-        } else {
-            console.error('navigator.mediaDevices.enumerateDevices() not supported.');
         }
     </script>
 </body>
