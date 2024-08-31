@@ -265,7 +265,7 @@
             const aspectRatio = window.localStorage.getItem('aspectRatio') || 1.777778;
             const screenWidth = window.screen.width;
             const screenHeight = window.screen.width / aspectRatio;
-            // const focusArea = Math.floor(screenHeight * 0.7);
+            const focusArea = Math.floor(screenHeight * 0.7);
             const config = { fps: 10, qrbox: { width: 300, height: 300 }, aspectRatio };
             // const config = { fps: 10, aspectRatio };
             console.log('malkhan ', screenWidth, screenHeight, focusArea);
