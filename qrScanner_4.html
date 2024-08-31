@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Scanner</title>
-    <script src="html5-qrcode.js" type="text/javascript"></script>
+    <script src="html5-qrcode.min.js" type="text/javascript"></script>
     <link rel="stylesheet" href="model-pop-up.css" />
     <link rel="stylesheet" href="page-loader.css" />
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" type="text/javascript"></script> -->
@@ -203,24 +203,34 @@
         
         const PERMISSION_DENIED = 'Error getting userMedia, error = NotAllowedError: Permission denied';
         
-        window.screen.orientation.addEventListener("change", (event) => {
-            const type = event.target.type;
-            const angle = event.target.angle;
-            console.log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
-            restartScanning();
-        });
+        // window.screen.orientation.addEventListener("change", (event) => {
+        //     const type = event.target.type;
+        //     const angle = event.target.angle;
+        //     console.log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
+        //     restartScanning();
+        // });
 
         function restartScanning() {
             console.log('restartScanning!!');
-            html5QrCode.stop().then((ignore) => {
-            // QR Code scanning is stopped.
-            console.log('stopped: ', ignore);
+            const aspectRatio = window.localStorage.getItem('aspectRatio') || 1.777778;
+            const screenWidth = window.screen.width;
+            const screenHeight = window.screen.width / aspectRatio;
 
-            startScanning();
-            }).catch((err) => {
-                console.log('stop error: ', err);
-            // Stop failed, handle it.
-            });
+            const focusArea = Math.floor(screenHeight * 0.7);
+            // const config = { fps: 10, aspectRatio };
+            const config = { fps: 10, qrbox: { width: focusArea, height: focusArea }, aspectRatio };
+            console.log('malkhan ', screenWidth, screenHeight, focusArea);
+            // html5QrCode.handleOrientationChange(screenWidth, screenHeight, config);
+            // document.getElementsByTagName('video')[0].style.width = '100vw';
+            // html5QrCode.stop().then((ignore) => {
+            // // QR Code scanning is stopped.
+            // console.log('stopped: ', ignore);
+
+            // startScanning();
+            // }).catch((err) => {
+            //     console.log('stop error: ', err);
+            // // Stop failed, handle it.
+            // });
         }
         
         function startScanning() {
@@ -253,11 +263,12 @@
             console.log('data5: ', data5);
             };
             const aspectRatio = window.localStorage.getItem('aspectRatio') || 1.777778;
-            const screenWidth = window.screen.width * 0.7;
+            const screenWidth = window.screen.width;
             const screenHeight = window.screen.width / aspectRatio;
             const focusArea = Math.floor(screenHeight * 0.7);
             const config = { fps: 10, qrbox: { width: focusArea, height: focusArea }, aspectRatio };
-
+            // const config = { fps: 10, aspectRatio };
+            console.log('malkhan ', screenWidth, screenHeight, focusArea);
             // If you want to prefer front camera
             // html5QrCode.start({ facingMode: "user" }, config, qrCodeSuccessCallback);
 
