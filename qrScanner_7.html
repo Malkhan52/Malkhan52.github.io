@@ -117,9 +117,12 @@
         <hr />
         <label for="env">Choose environment:</label>
         <select name="env" id="env">
-            <option value="users">Users</option>
+            <option value="user">Users</option>
             <option value="environment">Environment</option>
         </select>
+        <hr />
+        <input step="0.5" type="range" min="0.5" max="2" value="1" class="slider" id="zoomRangeSlider">
+        <p>Value: <span id="zoomRangeSliderValue"></span></p>
         <hr />
         <button onclick="restartScanning()" class="restart-scanner-btn">Restart Scanning</button>
     </div>
@@ -131,12 +134,21 @@
     frameRateRangeSlider.oninput = function() {
         frameRateRangeSliderValue.innerHTML = this.value;
     }
+    
     var focusAreaRangeSlider = document.getElementById("focusAreaRangeSlider");
     var focusAreaRangeSliderValue = document.getElementById("focusAreaRangeSliderValue");
     focusAreaRangeSliderValue.innerHTML = focusAreaRangeSlider.value;
 
     focusAreaRangeSlider.oninput = function() {
         focusAreaRangeSliderValue.innerHTML = this.value;
+    }
+
+    var zoomRangeSlider = document.getElementById("zoomRangeSlider");
+    var zoomRangeSliderValue = document.getElementById("zoomRangeSliderValue");
+    zoomRangeSliderValue.innerHTML = zoomRangeSlider.value;
+
+    zoomRangeSlider.oninput = function() {
+        zoomRangeSliderValue.innerHTML = this.value;
     }
     // window.addEventListener('resize', restartScanning);
         const html5QrCode = new Html5Qrcode(/* element id */ "reader");
@@ -186,10 +198,15 @@
             };
             let isChecked = true;
             const qrCodeErrorCallback = (errorMessage, error) => {
+                const zoomRangeValue = document.getElementById("zoomRangeSlider").value;
+                const camCap = html5QrCode.getRunningTrackCameraCapabilities();
+                if (camCap.zoomFeature().isSupported() && camCap.zoomFeature().value() !== zoomRangeValue) {
+                    console.log('malkhan old value applied: ', camCap.zoomFeature().value(), zoomRangeValue);
+                    camCap.zoomFeature().apply(zoomRangeValue);
+                }
                 hidePageLoader();
                 if (isChecked) {
                     isChecked = false;
-                    const camCap = html5QrCode.getRunningTrackCameraCapabilities();
                     console.log('malkhan camCap: ', camCap.zoomFeature().isSupported());
                     console.log('malkhan camCap value: ', camCap.zoomFeature().value());
                     console.log('malkhan camCap min max step: ', camCap.zoomFeature().min(), camCap.zoomFeature().max(), camCap.zoomFeature().step());
