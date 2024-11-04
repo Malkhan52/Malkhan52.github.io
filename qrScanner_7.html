@@ -210,9 +210,8 @@
             }};
             // const config = { fps: 10, aspectRatio };
             console.log('malkhan config ', config);
-            // If you want to prefer front camera
-            // html5QrCode.start({ facingMode: "user" }, config, qrCodeSuccessCallback);
-
+            console.log('malkhan config ', JSON.stringify(config));
+            
             // If you want to prefer back camera
             scanningSection.style.display = "block";
             qrScanningBrewerImg.style.display = "none";
@@ -220,7 +219,6 @@
             // qrScanningBrewerImg.style.visibility = "hidden";
             // qrCodeScannerSection.style.visibility = "hidden";
             
-
             html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback, qrCodeErrorCallback).catch((error) => {
                 // console.log('error catch: ', error, typeof(error));
                 errorMsg.innerText = error;
