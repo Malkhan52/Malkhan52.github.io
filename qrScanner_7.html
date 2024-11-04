@@ -203,12 +203,10 @@
             const screenWidth = window.screen.width;
             const screenHeight = window.screen.width / aspectRatio;
             const focusArea = Math.floor(screenHeight * focusAreaValue);
-            const config = { fps: frameRateValue, qrbox: { width: focusArea, height: focusArea }, aspectRatio, disableFlip: true, videoConstraints: {
+            const config = { fps: frameRateValue, qrbox: { width: focusArea, height: focusArea }, aspectRatio, videoConstraints: {
                 height: 600,
-                width: 600,
-                name: 'malkhan'
+                width: 600
             }};
-            // const config = { fps: 10, aspectRatio };
             console.log('malkhan config ', config);
             console.log('malkhan config ', JSON.stringify(config));
             
