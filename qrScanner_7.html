@@ -112,8 +112,14 @@
         <input type="range" min="1" max="100" value="50" class="slider" id="frameRateRangeSlider">
         <p>Value: <span id="frameRateRangeSliderValue"></span></p>
         <hr />
-        <input step="0.05" type="range" min="0" max="1" value="0.9" class="slider" id="focusAreaRangeSlider">
+        <input step="0.05" type="range" min="0" max="3" value="0.9" class="slider" id="focusAreaRangeSlider">
         <p>Value: <span id="focusAreaRangeSliderValue"></span></p>
+        <hr />
+        <label for="env">Choose environment:</label>
+        <select name="env" id="env">
+            <option value="users">Users</option>
+            <option value="environment">Environment</option>
+        </select>
         <hr />
         <button onclick="restartScanning()" class="restart-scanner-btn">Restart Scanning</button>
     </div>
@@ -199,14 +205,11 @@
             const aspectRatio = 1.777778;
             const frameRateValue = document.getElementById("frameRateRangeSlider").value;
             const focusAreaValue = document.getElementById("focusAreaRangeSlider").value;
-
+            const facingModeValue = document.getElementById("env").value;
             const screenWidth = window.screen.width;
             const screenHeight = window.screen.width / aspectRatio;
             const focusArea = Math.floor(screenHeight * focusAreaValue);
-            const config = { fps: frameRateValue, qrbox: { width: focusArea, height: focusArea }, aspectRatio, videoConstraints: {
-                height: 600,
-                width: 600
-            }};
+            const config = { fps: frameRateValue, qrbox: { width: focusArea, height: focusArea }, aspectRatio };
             console.log('malkhan config ', config);
             console.log('malkhan config ', JSON.stringify(config));
             
@@ -217,7 +220,7 @@
             // qrScanningBrewerImg.style.visibility = "hidden";
             // qrCodeScannerSection.style.visibility = "hidden";
             
-            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback, qrCodeErrorCallback).catch((error) => {
+            html5QrCode.start({ facingMode: facingModeValue }, config, qrCodeSuccessCallback, qrCodeErrorCallback).catch((error) => {
                 // console.log('error catch: ', error, typeof(error));
                 errorMsg.innerText = error;
                 modalBody.innerText = error;
