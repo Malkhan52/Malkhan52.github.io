@@ -111,43 +111,52 @@
     <div>
         <hr />
         <input type="range" min="1" max="100" value="50" class="slider" id="frameRateRangeSlider">
-        <p>Value: <span id="frameRateRangeSliderValue"></span></p>
+        <p>FPS Value: <span id="frameRateRangeSliderValue"></span></p>
         <hr />
-        <input step="0.05" type="range" min="0" max="3" value="0.9" class="slider" id="focusAreaRangeSlider">
-        <p>Value: <span id="focusAreaRangeSliderValue"></span></p>
+        <input step="1" type="range" min="0" max="255" value="0" class="slider" id="contrastRangeSlider">
+        <p>Min Value: <span id="contrastRangeSliderValue"></span></p>
+        <hr />
+        <input step="1" type="range" min="0" max="255" value="255" class="slider" id="brightnessRangeSlider">
+        <p>Max Value: <span id="brightnessRangeSliderValue"></span></p>
         <hr />
         <label for="env">Choose environment:</label>
         <select name="env" id="env">
-            <option value="user">Users</option>
             <option value="environment">Environment</option>
+            <option value="user">Users</option>
         </select>
         <hr />
         <input step="0.5" type="range" min="0.5" max="2" value="1" class="slider" id="zoomRangeSlider">
-        <p>Value: <span id="zoomRangeSliderValue"></span></p>
+        <p>Zoom Value: <span id="zoomRangeSliderValue"></span></p>
         <hr />
         <button onclick="restartScanning()" class="restart-scanner-btn">Restart Scanning</button>
     </div>
+    <canvas id="canvasOutput"></canvas>
+    <canvas id="canvasOutput2"></canvas>
     <script>
     var frameRateRangeSlider = document.getElementById("frameRateRangeSlider");
     var frameRateRangeSliderValue = document.getElementById("frameRateRangeSliderValue");
     frameRateRangeSliderValue.innerHTML = frameRateRangeSlider.value;
-
     frameRateRangeSlider.oninput = function() {
         frameRateRangeSliderValue.innerHTML = this.value;
     }
     
-    var focusAreaRangeSlider = document.getElementById("focusAreaRangeSlider");
-    var focusAreaRangeSliderValue = document.getElementById("focusAreaRangeSliderValue");
-    focusAreaRangeSliderValue.innerHTML = focusAreaRangeSlider.value;
+    var contrastRangeSlider = document.getElementById("contrastRangeSlider");
+    var contrastRangeSliderValue = document.getElementById("contrastRangeSliderValue");
+    contrastRangeSliderValue.innerHTML = contrastRangeSlider.value;
+    contrastRangeSlider.oninput = function() {
+        contrastRangeSliderValue.innerHTML = this.value;
+    }
 
-    focusAreaRangeSlider.oninput = function() {
-        focusAreaRangeSliderValue.innerHTML = this.value;
+    var brightnessRangeSlider = document.getElementById("brightnessRangeSlider");
+    var brightnessRangeSliderValue = document.getElementById("brightnessRangeSliderValue");
+    brightnessRangeSliderValue.innerHTML = brightnessRangeSlider.value;
+    brightnessRangeSlider.oninput = function() {
+        brightnessRangeSliderValue.innerHTML = this.value;
     }
 
     var zoomRangeSlider = document.getElementById("zoomRangeSlider");
     var zoomRangeSliderValue = document.getElementById("zoomRangeSliderValue");
     zoomRangeSliderValue.innerHTML = zoomRangeSlider.value;
-
     zoomRangeSlider.oninput = function() {
         zoomRangeSliderValue.innerHTML = this.value;
     }
@@ -201,18 +210,56 @@
             const qrCodeErrorCallback = (errorMessage, error) => {
                 // using opencv as a fallback
                 try {
+                    const alpha = Number(document.getElementById('contrastRangeSlider').value);
+                    const beta = Number(document.getElementById('brightnessRangeSlider').value);
                     const canvasElement = document.getElementById('qr-canvas');
                     let inputFeed = cv.imread(canvasElement);
+                    // const adjustedFeed = new cv.Mat();
+                    // inputFeed.convertTo(adjustedFeed, -1, alpha, beta);
+
+                    // Use openCV to detect QR code in frame
+                    // Load imgae, grayscale, Gaussian blur, Otsu's threshold
+                    const gray = new cv.Mat();
+                    cv.cvtColor(inputFeed, gray, cv.COLOR_BGR2GRAY)
+                    // Apply Gaussian Blur
+                    const blurred = new cv.Mat();
+                    const ksize = new cv.Size(15, 15);  // Kernel size (width, height)
+                    const sigmaX = 0;                    // Standard deviation in the X direction
+                    cv.GaussianBlur(gray, blurred, ksize, sigmaX);
+                    
+                    const thresh = new cv.Mat();
+                    cv.threshold(blurred, thresh, alpha, beta, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
+
+                    const kernelSize = new cv.Size(5, 5);  // Kernel size
+                    const kernel = cv.getStructuringElement(cv.MORPH_RECT, kernelSize);
+                    
+                    // Apply morphological closing operation
+                    const morph = new cv.Mat();
+                    cv.morphologyEx(thresh, morph, cv.MORPH_CLOSE, kernel);
+
+                    // find contoures 
+                    // const cnts = cv.findContours(morphClose, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                    // console.log('malkhan cnts: ', cnts);
                     const points_vec = new cv.Mat();
                     const qrcode_detector = new cv.QRCodeDetector();
+                    const canvasOutput = document.getElementById('canvasOutput');
+                    canvasOutput.width = inputFeed.cols;
+                    canvasOutput.height = inputFeed.rows;
+                    cv.imshow(canvasOutput, thresh);
+                    
+                    const canvasOutput2 = document.getElementById('canvasOutput2');
+                    canvasOutput2.width = inputFeed.cols;
+                    canvasOutput2.height = inputFeed.rows;
+                    cv.imshow(canvasOutput2, morph);
+                    
                     const res = qrcode_detector.detectAndDecode(inputFeed, points_vec);
                     if (res) {
-                        stopScanning();
                         console.log('malkhan res: ', res);
                         qrCodeSuccessCallback(res, res);
                     }
                     // Clean up
                     inputFeed.delete();
+                    // adjustedFeed.delete();
                     points_vec.delete();
                     qrcode_detector.delete();
                 } catch (error) {
@@ -243,12 +290,11 @@
             };
             const aspectRatio = 1.777778;
             const frameRateValue = document.getElementById("frameRateRangeSlider").value;
-            const focusAreaValue = document.getElementById("focusAreaRangeSlider").value;
             const facingModeValue = document.getElementById("env").value;
             const screenWidth = window.screen.width;
             const screenHeight = window.screen.width / aspectRatio;
             console.log('malkhan screenWidth, cameraHeight screenHeight: ', screenWidth, screenHeight, window.screen.height);
-            const focusArea = Math.floor(screenHeight * focusAreaValue);
+            const focusArea = Math.floor(screenHeight * 0.9);
             const config = { fps: frameRateValue, aspectRatio };
             console.log('malkhan config ', config);
             console.log('malkhan config ', JSON.stringify(config));
