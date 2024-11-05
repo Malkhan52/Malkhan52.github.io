@@ -209,11 +209,7 @@
                     if (res) {
                         stopScanning();
                         console.log('malkhan res: ', res);
-                        serialNumberInput.value = decodedText;
-                        qrScanningBrewerImg.style.display = "none";
-                        qrCodeScannerSection.style.display = "none";
-                        defaultBrewerImg.style.display = "block";
-                        scanningSection.style.display = "none";
+                        qrCodeSuccessCallback(res, res);
                     }
                     // Clean up
                     inputFeed.delete();
