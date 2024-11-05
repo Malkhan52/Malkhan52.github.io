@@ -207,7 +207,13 @@
                     const qrcode_detector = new cv.QRCodeDetector();
                     const res = qrcode_detector.detectAndDecode(inputFeed, points_vec);
                     if (res) {
+                        stopScanning();
                         console.log('malkhan res: ', res);
+                        serialNumberInput.value = decodedText;
+                        qrScanningBrewerImg.style.display = "none";
+                        qrCodeScannerSection.style.display = "none";
+                        defaultBrewerImg.style.display = "block";
+                        scanningSection.style.display = "none";
                     }
                     // Clean up
                     inputFeed.delete();
@@ -219,7 +225,7 @@
 
                 const zoomRangeValue = document.getElementById("zoomRangeSlider").value;
                 const camCap = html5QrCode.getRunningTrackCameraCapabilities();
-                if (camCap.zoomFeature().isSupported() && camCap.zoomFeature().value() !== zoomRangeValue) {
+                if (camCap.zoomFeature().isSupported() && Number(camCap.zoomFeature().value()) !== Number(zoomRangeValue)) {
                     console.log('malkhan old value applied: ', camCap.zoomFeature().value(), zoomRangeValue);
                     camCap.zoomFeature().apply(zoomRangeValue);
                 }
