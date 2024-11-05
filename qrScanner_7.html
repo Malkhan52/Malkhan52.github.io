@@ -225,8 +225,9 @@
             const facingModeValue = document.getElementById("env").value;
             const screenWidth = window.screen.width;
             const screenHeight = window.screen.width / aspectRatio;
+            console.log('malkhan screenWidth, cameraHeight screenHeight: ', screenWidth, screenHeight, window.screen.height);
             const focusArea = Math.floor(screenHeight * focusAreaValue);
-            const config = { fps: frameRateValue, qrbox: { width: focusArea, height: focusArea }, aspectRatio };
+            const config = { fps: frameRateValue, aspectRatio };
             console.log('malkhan config ', config);
             console.log('malkhan config ', JSON.stringify(config));
             
