@@ -123,7 +123,7 @@
         <p>Zoom Value: <span id="zoomRangeSliderValue"></span></p>
         <hr />
         <button onclick="restartScanning()" class="restart-scanner-btn">Restart Scanning</button>
-        <button onclick="captureMoment()" id="capture-moment-event">Capture Moment</button>
+        <button id="capture-moment-event">Capture Moment</button>
     </div>
     <canvas id="canvasOutput"></canvas>
     <canvas id="canvasOutput2"></canvas>
@@ -179,6 +179,10 @@
         function detectQRCodeFromOpenCV(canvasElement) {
             console.log('malkhan reading img from opencv');
             let inputFeed = cv.imread(canvasElement);
+            const canvasElm = document.getElementById('canvasOutput');
+            canvasElm.width = inputFeed.cols;
+            canvasElm.height = inputFeed.rows;
+            cv.imshow(canvasElm, inputFeed);
             const points_vec = new cv.Mat();
             const qrcode_detector = new cv.QRCodeDetector();
             const res = qrcode_detector.detectAndDecode(inputFeed, points_vec);
@@ -190,14 +194,6 @@
             inputFeed.delete();
             points_vec.delete();
             qrcode_detector.delete();
-        }
-        let canvasElementGlb;
-        function captureMoment() {
-            try {
-                detectQRCodeFromOpenCV(canvasElementGlb);
-            } catch (error) {
-                console.log('malkhan error: ', error);
-            }
         }
 
         function startScanning() {
@@ -216,7 +212,11 @@
             let isChecked = true;
             const qrCodeErrorCallback = (errorMessage, error) => {
                 // using opencv as a fallback
-                canvasElementGlb = document.getElementById('qr-canvas');
+                const canvasElement = document.getElementById('qr-canvas');
+                document.getElementById('capture-moment-event').addEventListener('click', function() {
+                    console.log("Button clicked!");
+                    detectQRCodeFromOpenCV(canvasElement);
+                }, { once: true });
                 
                 const zoomRangeValue = document.getElementById("zoomRangeSlider").value;
                 const camCap = html5QrCode.getRunningTrackCameraCapabilities();
