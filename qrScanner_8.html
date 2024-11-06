@@ -125,6 +125,25 @@
         <input step="1" type="range" min="0" max="20" value="2" class="slider" id="constantRangeSlider">
         <p>Constant Value: <span id="constantRangeSliderValue"></span></p>
         <hr />
+        <form>
+            <div class="slider-container">
+                <label>Exposure: <input type="range" name="exposure" id="exposure" min="-100" max="100" value="0" oninput="this.form.exposureNumber.value=this.value">
+                    <input type="number" name="exposureNumber" id="exposure" min="-100" max="100" value="0" oninput="this.form.exposure.value=this.value">
+                </label><br>
+                <label>Brilliance: <input type="range" id="brilliance" min="0" max="100" value="50" oninput="this.form.brillianceNumber.value=this.value">
+                    <input type="number" id="brillianceNumber" min="0" max="100" value="50" oninput="this.form.brilliance.value=this.value"></label><br>
+                <label>Highlights: <input type="range" id="highlights" min="0" max="100" value="50" oninput="this.form.highlightsNumber.value=this.value">
+                    <input type="number" id="highlightsNumber" min="0" max="100" value="50" oninput="this.form.highlights.value=this.value"></label><br>
+                <label>Shadows: <input type="range" id="shadows" min="0" max="100" value="50" oninput="this.form.shadowsNumber.value=this.value">
+                    <input type="number" id="shadowsNumber" min="0" max="100" value="50" oninput="this.form.shadows.value=this.value"></label><br>
+                <label>Contrast: <input type="range" id="contrast" min="0" max="100" value="50" oninput="this.form.contrastNumber.value=this.value">
+                    <input type="number" id="contrastNumber" min="0" max="100" value="50" oninput="this.form.contrast.value=this.value"></label><br>
+                <label>Brightness: <input type="range" id="brightness" min="0" max="100" value="50" oninput="this.form.brightnessNumber.value=this.value">
+                    <input type="number" id="brightnessNumber" min="0" max="100" value="50" oninput="this.form.brightness.value=this.value"></label><br>
+                <label>Black Point: <input type="range" id="blackpoint" min="0" max="100" value="0" oninput="this.form.blackpointNumber.value=this.value">
+                    <input type="number" id="blackpointNumber" min="0" max="100" value="0" oninput="this.form.blackpoint.value=this.value"></label>
+            </div>
+        </form>
         <label for="env">Choose environment:</label>
         <select name="env" id="env">
             <option value="environment">Environment</option>
@@ -229,24 +248,60 @@
                     const gray = new cv.Mat();
                     const blurred = new cv.Mat();
                     const thresholded = new cv.Mat();
+                    const mask_3ch = new cv.Mat(inputFeed.rows, inputFeed.cols, cv.CV_8UC4);
+                    const masked_image = new cv.Mat(inputFeed.rows, inputFeed.cols, cv.CV_8UC4);
+
                     cv.cvtColor(inputFeed, gray, cv.COLOR_RGBA2GRAY);
                     const alpha = Number(document.getElementById("contrastRangeSlider").value); // Contrast control
                     const beta = Number(document.getElementById("brightnessRangeSlider").value);   // Brightness control
 
                     const kernelSize = Number(document.getElementById("kernelSizeRangeSlider").value);
                     const constantValue = Number(document.getElementById("constantRangeSlider").value);
-                    gray.convertTo(gray, -1, alpha, beta);
-                    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
-                    cv.adaptiveThreshold(blurred, thresholded, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, kernelSize, constantValue);
-                    // render threshold frame in canvas
+                    // gray.convertTo(gray, -1, alpha, beta);
+                    // cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+                    // cv.adaptiveThreshold(blurred, thresholded, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, kernelSize, constantValue);
+                    // cv.cvtColor(thresholded, mask_3ch, cv.COLOR_GRAY2BGR);
+                    // cv.bitwise_and(inputFeed, masked_image, mask_3ch);
+                    // cv.cvtColor(masked_image, masked_image, cv.COLOR_BGR2RGB);
+                    let dst = new cv.Mat();
+                    let exposure = parseInt(document.getElementById('exposure').value);
+                    let brilliance = parseInt(document.getElementById('brilliance').value) / 50;
+                    let highlights = parseInt(document.getElementById('highlights').value) / 100;
+                    let shadows = parseInt(document.getElementById('shadows').value) / 100;
+                    let contrast = parseInt(document.getElementById('contrast').value) / 50;
+                    let brightness = parseInt(document.getElementById('brightness').value) - 50;
+                    let blackPoint = parseInt(document.getElementById('blackpoint').value);
+                    // Make a copy of the original image
+                    inputFeed.copyTo(dst);
+
+                    // Apply adjustments
+                    // Brightness and Contrast
+                    dst.convertTo(dst, -1, contrast, brightness);
+
+                    // Exposure adjustment
+                    let exposureFactor = 1 + (exposure / 100);
+                    cv.multiply(dst, new cv.Mat(dst.rows, dst.cols, dst.type(), [exposureFactor, exposureFactor, exposureFactor, 1]), dst);
+
+                    // Black Point Adjustment
+                    cv.threshold(dst, dst, blackPoint, 255, cv.THRESH_TOZERO);
+
+                    // Shadows and Highlights (simplified)
+                    // let shadowMat = new cv.Mat(dst.size(), dst.type(), new cv.Scalar(1 - shadows, 1 - shadows, 1 - shadows, 1));
+                    // let highlightMat = new cv.Mat(dst.size(), dst.type(), new cv.Scalar(highlights, highlights, highlights, 1));
+                    // cv.multiply(dst, shadowMat, dst);
+                    // cv.add(dst, highlightMat, dst);
+
+                    // Brilliance (combined brightness and contrast scaling)
+                    let brillianceFactor = 1 + (brilliance - 1);
+                    cv.multiply(dst, new cv.Mat(dst.rows, dst.cols, dst.type(), [brillianceFactor, brillianceFactor, brillianceFactor, 1]), dst);
                     const canvasElm = document.getElementById('canvasOutput');
                     canvasElm.width = inputFeed.cols;
                     canvasElm.height = inputFeed.rows;
-                    cv.imshow(canvasElm, thresholded);
+                    cv.imshow(canvasElm, dst);
 
                     const points_vec = new cv.Mat();
                     const qrcode_detector = new cv.QRCodeDetector();
-                    const res = qrcode_detector.detectAndDecode(thresholded, points_vec);
+                    const res = qrcode_detector.detectAndDecode(inputFeed, points_vec);
                     if (res) {
                         console.log('malkhan res: ', res);
                         qrCodeSuccessCallback(res, res);
