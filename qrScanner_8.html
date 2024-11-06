@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Scanner</title>
+    <!-- <script src="html5-qrcode.min.js" type="text/javascript"></script> -->
+    <link rel="stylesheet" href="model-pop-up.css" />
+    <link rel="stylesheet" href="page-loader.css" />
+    <script src="https://docs.opencv.org/4.10.0/opencv.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
+</head>
+<style>
+    .scanner-btn {
+        background: #3B2B2F;
+        height: 50px;
+        width: 350px;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 15px;
+        line-height: 42px;
+        color: white;
+        
+    }
+    #serial-number-input {
+        width: 350px;
+        height: 50px;
+        border-radius: 25px;
+        border: 1px solid #AA8066;
+        padding-left: 20px;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 20.28px;
+    }
+    #serial-number-input::placeholder {
+        color: #AA8066;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 20.28px;
+        text-align: left;
+    }
+    #serial-number-box {
+        padding-top: 40px;
+    }
+    #defalut-brewer-img {
+        display: none;
+    }
+    #errorMsg {
+        color: red;
+    }
+    
+    /* #reader {
+            max-width: 400px;
+        } */
+    #scanning-section-container {
+        justify-content: center;
+        width: 100%;
+        display: flex;
+    }
+    #scanning-section{
+        width: 100vw;
+        aspect-ratio: 16/9;
+    }
+    @media (orientation: landscape) {
+        #scanning-section{
+            /* min-height: 500px;
+            max-height: 700px; */
+            /* height: auto; */
+            display: none;
+            width: 100vw;
+        }
+        #reader {
+            /* width: 100%; */
+            width: 100vw;
+        }
+    }
+    @media (orientation: portrait) {
+        #scanning-section{
+            /* min-height: 400px; */
+            /* height: auto; */
+            display: none;
+            width: 100vw;
+        }
+        #reader {
+            width: 100vw;
+        }
+    }
+</style>
+<body>
+    <h1>QR Code Scanner</h1>
+    <div id="loader"></div>
+    <div id="scanning-section-container">
+        <div id="scanning-section">
+            <div id="reader"></div>
+        </div>
+    </div>
+    <div>
+        <div id="qr-scanning-brewer-img">
+            <img height="200" src="https://cdn.mos.cms.futurecdn.net/Y8oFodGLyPJZRtKjyFjBLN-1920-80.jpg.webp" />
+        </div>
+        <div id="defalut-brewer-img">
+            <img height="250" src="https://cdn.mos.cms.futurecdn.net/Y8oFodGLyPJZRtKjyFjBLN-1920-80.jpg.webp" />
+        </div>
+        <div id="qr-code-scanner">
+            <button onclick="startScanning()" class="scanner-btn">SCAN QR CODE To Register</button>
+        </div>
+        <div id="serial-number-box">
+            <input id="serial-number-input" type="text" placeholder="Serial Number" value=""/>
+        </div>
+    </div>
+    <div>
+        <hr />
+        <input type="range" min="1" max="100" value="50" class="slider" id="frameRateRangeSlider">
+        <p>FPS Value: <span id="frameRateRangeSliderValue"></span></p>
+        <hr />
+        <input step="0.1" type="range" min="0" max="3" value="1.5" class="slider" id="contrastRangeSlider">
+        <p>Contrast Value: <span id="contrastRangeSliderValue"></span></p>
+        <hr />
+        <input step="1" type="range" min="-100" max="100" value="20" class="slider" id="brightnessRangeSlider">
+        <p>Brightness Value: <span id="brightnessRangeSliderValue"></span></p>
+        <hr />
+        <input step="2" type="range" min="3" max="25" value="11" class="slider" id="kernelSizeRangeSlider">
+        <p>Kernel Value: <span id="kernelSizeRangeSliderValue"></span></p>
+        <hr />
+        <input step="1" type="range" min="0" max="20" value="2" class="slider" id="constantRangeSlider">
+        <p>Constant Value: <span id="constantRangeSliderValue"></span></p>
+        <hr />
+        <label for="env">Choose environment:</label>
+        <select name="env" id="env">
+            <option value="environment">Environment</option>
+            <option value="user">Users</option>
+        </select>
+        <hr />
+        <input step="0.5" type="range" min="0.5" max="2" value="1" class="slider" id="zoomRangeSlider">
+        <p>Zoom Value: <span id="zoomRangeSliderValue"></span></p>
+        <hr />
+        <button onclick="restartScanning()" class="restart-scanner-btn">Restart Scanning</button>
+    </div>
+    <canvas id="canvasOutput"></canvas>
+    <script>
+    var frameRateRangeSlider = document.getElementById("frameRateRangeSlider");
+    var frameRateRangeSliderValue = document.getElementById("frameRateRangeSliderValue");
+    frameRateRangeSliderValue.innerHTML = frameRateRangeSlider.value;
+
+    frameRateRangeSlider.oninput = function() {
+        frameRateRangeSliderValue.innerHTML = this.value;
+    }
+    
+    var contrastRangeSlider = document.getElementById("contrastRangeSlider");
+    var contrastRangeSliderValue = document.getElementById("contrastRangeSliderValue");
+    contrastRangeSliderValue.innerHTML = contrastRangeSlider.value;
+    contrastRangeSlider.oninput = function() {
+        contrastRangeSliderValue.innerHTML = this.value;
+    }
+
+    var brightnessRangeSlider = document.getElementById("brightnessRangeSlider");
+    var brightnessRangeSliderValue = document.getElementById("brightnessRangeSliderValue");
+    brightnessRangeSliderValue.innerHTML = brightnessRangeSlider.value;
+    brightnessRangeSlider.oninput = function() {
+        brightnessRangeSliderValue.innerHTML = this.value;
+    }
+    
+    var kernelSizeRangeSlider = document.getElementById("kernelSizeRangeSlider");
+    var kernelSizeRangeSliderValue = document.getElementById("kernelSizeRangeSliderValue");
+    kernelSizeRangeSliderValue.innerHTML = kernelSizeRangeSlider.value;
+    kernelSizeRangeSlider.oninput = function() {
+        kernelSizeRangeSliderValue.innerHTML = this.value;
+    }
+
+    var constantRangeSlider = document.getElementById("constantRangeSlider");
+    var constantRangeSliderValue = document.getElementById("constantRangeSliderValue");
+    constantRangeSliderValue.innerHTML = constantRangeSlider.value;
+    constantRangeSlider.oninput = function() {
+        constantRangeSliderValue.innerHTML = this.value;
+    }
+
+    var zoomRangeSlider = document.getElementById("zoomRangeSlider");
+    var zoomRangeSliderValue = document.getElementById("zoomRangeSliderValue");
+    zoomRangeSliderValue.innerHTML = zoomRangeSlider.value;
+
+    zoomRangeSlider.oninput = function() {
+        zoomRangeSliderValue.innerHTML = this.value;
+    }
+    // window.addEventListener('resize', restartScanning);
+        const html5QrCode = new Html5Qrcode(/* element id */ "reader");
+        // File based scanning
+        const fileinput = document.getElementById('qr-input-file');
+        const qrCodeScannerSection = document.getElementById('qr-code-scanner');
+        const serialNumberInput = document.getElementById('serial-number-input');
+        const qrScanningBrewerImg = document.getElementById('qr-scanning-brewer-img');
+        const defaultBrewerImg = document.getElementById('defalut-brewer-img');
+        const scanningSection = document.getElementById('scanning-section');
+        const errorMsg = document.getElementById('errorMsg');
+        
+        const PERMISSION_DENIED = 'Error getting userMedia, error = NotAllowedError: Permission denied';
+
+        function restartScanning() {
+            console.log('restartScanning!!');
+            html5QrCode.stop().then((ignore) => {
+            // QR Code scanning is stopped.
+            console.log('stopped: ', ignore);
+
+            startScanning();
+            }).catch((err) => {
+                console.log('stop error: ', err);
+            // Stop failed, handle it.
+            });
+        }
+        
+        function startScanning() {
+            console.log('startScanning!!');
+            showPageLoader();
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                stopScanning();
+                console.log('decodedText: ', decodedText);
+                console.log('decodedResult: ', decodedResult);
+                serialNumberInput.value = decodedText;
+                qrScanningBrewerImg.style.display = "none";
+                qrCodeScannerSection.style.display = "none";
+                defaultBrewerImg.style.display = "block";
+                scanningSection.style.display = "none";
+            };
+            let isChecked = true;
+            const qrCodeErrorCallback = (errorMessage, error) => {
+                // using opencv as a fallback
+                try {
+                    const canvasElement = document.getElementById('qr-canvas');
+                    let inputFeed = cv.imread(canvasElement);
+                    const gray = new cv.Mat();
+                    const blurred = new cv.Mat();
+                    const thresholded = new cv.Mat();
+                    cv.cvtColor(inputFeed, gray, cv.COLOR_RGBA2GRAY);
+                    const alpha = Number(document.getElementById("contrastRangeSlider").value); // Contrast control
+                    const beta = Number(document.getElementById("brightnessRangeSlider").value);   // Brightness control
+
+                    const kernelSize = Number(document.getElementById("kernelSizeRangeSlider").value);
+                    const constantValue = Number(document.getElementById("constantRangeSlider").value);
+                    gray.convertTo(gray, -1, alpha, beta);
+                    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+                    cv.adaptiveThreshold(blurred, thresholded, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, kernelSize, constantValue);
+                    // render threshold frame in canvas
+                    const canvasElm = document.getElementById('canvasOutput');
+                    canvasElm.width = inputFeed.cols;
+                    canvasElm.height = inputFeed.rows;
+                    cv.imshow(canvasElm, thresholded);
+
+                    const points_vec = new cv.Mat();
+                    const qrcode_detector = new cv.QRCodeDetector();
+                    const res = qrcode_detector.detectAndDecode(thresholded, points_vec);
+                    if (res) {
+                        console.log('malkhan res: ', res);
+                        qrCodeSuccessCallback(res, res);
+                    }
+                    // Clean up
+                    inputFeed.delete();
+                    gray.delete();
+                    blurred.delete();
+                    thresholded.delete();
+                    points_vec.delete();
+                    qrcode_detector.delete();
+                } catch (error) {
+                    console.log('malkhan ', error);
+                }
+
+                const zoomRangeValue = document.getElementById("zoomRangeSlider").value;
+                const camCap = html5QrCode.getRunningTrackCameraCapabilities();
+                if (camCap.zoomFeature().isSupported() && Number(camCap.zoomFeature().value()) !== Number(zoomRangeValue)) {
+                    console.log('malkhan old value applied: ', camCap.zoomFeature().value(), zoomRangeValue);
+                    camCap.zoomFeature().apply(zoomRangeValue);
+                }
+                hidePageLoader();
+                if (isChecked) {
+                    console.log('malkhan cv inputFeed: ', inputFeed);
+                    isChecked = false;
+                    console.log('malkhan camCap: ', camCap.zoomFeature().isSupported());
+                    console.log('malkhan camCap value: ', camCap.zoomFeature().value());
+                    console.log('malkhan camCap min max step: ', camCap.zoomFeature().min(), camCap.zoomFeature().max(), camCap.zoomFeature().step());
+                }
+                // console.log('error message: ', errorMessage);
+                // console.log('error obj: ', error);
+                errorMsg.innerText = errorMessage;
+                // modalBody.innerText = errorMessage;
+                
+            const data5 = html5QrCode.getState();
+            console.log('data5: ', data5);
+            };
+            const aspectRatio = 1.777778;
+            const frameRateValue = document.getElementById("frameRateRangeSlider").value;
+            const facingModeValue = document.getElementById("env").value;
+            const screenWidth = window.screen.width;
+            const screenHeight = window.screen.width / aspectRatio;
+            console.log('malkhan screenWidth, cameraHeight screenHeight: ', screenWidth, screenHeight, window.screen.height);
+            const focusArea = Math.floor(screenHeight * 0.9);
+            const config = { fps: frameRateValue, aspectRatio };
+            console.log('malkhan config ', config);
+            console.log('malkhan config ', JSON.stringify(config));
+            
+            // If you want to prefer back camera
+            scanningSection.style.display = "block";
+            qrScanningBrewerImg.style.display = "none";
+            qrCodeScannerSection.style.display = "none";
+            // qrScanningBrewerImg.style.visibility = "hidden";
+            // qrCodeScannerSection.style.visibility = "hidden";
+            
+            html5QrCode.start({ facingMode: facingModeValue }, config, qrCodeSuccessCallback, qrCodeErrorCallback).catch((error) => {
+                // console.log('error catch: ', error, typeof(error));
+                errorMsg.innerText = error;
+                modalBody.innerText = error;
+
+                if (error === PERMISSION_DENIED) {
+                    console.log('denied!');
+                    askForPermission();
+                    // stopScanning();
+                }
+            });
+        }
+        function askForPermission(){
+            // This method will trigger user permissions
+            Html5Qrcode.getCameras().then(devices => {
+            /**
+             * devices would be an array of objects of type:
+             * { id: "id", label: "label" }
+             */
+            if (devices && devices.length) {
+                var cameraId = devices[0].id;
+                // .. use this to start scanning.
+                console.log('cameraId: ', cameraId);
+            }
+            }).catch(err => {
+            // handle err
+                console.log('asking for permission: ', err);
+                // stopScanning();
+            });
+        }
+        function stopScanning() {
+            html5QrCode.stop().then((ignore) => {
+            // QR Code scanning is stopped.
+            console.log('stopped: ', ignore);
+            
+            }).catch((err) => {
+                console.log('stop error: ', err);
+            // Stop failed, handle it.
+            });
+        }
+
+        function pauseScanning() {
+            html5QrCode.pause();
+        }
+        function resumeScanning() {
+            html5QrCode.resume();
+        }
+
+        function getAllDevices(){
+            if (!navigator.mediaDevices?.enumerateDevices) {
+                console.log("enumerateDevices() not supported.");
+                } else {
+                // List cameras and microphones.
+                navigator.mediaDevices
+                    .enumerateDevices()
+                    .then((devices) => {
+                    devices.forEach((device) => {
+                        console.log('device: ', device);
+                        console.log(`${device.kind}: ${device.label} id = ${device.deviceId}`);
+                    });
+                    })
+                    .catch((err) => {
+                    console.error(`${err.name}: ${err.message}`);
+                    });
+                }
+        }
+    </script>
+    <script src="model-popup.js" type="text/javascript"></script>
+    <script src="handle-pageloaer.js" type="text/javascript"></script>
+    
+</body>
+</html>
