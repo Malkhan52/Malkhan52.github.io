@@ -220,12 +220,14 @@
                 
                 const zoomRangeValue = document.getElementById("zoomRangeSlider").value;
                 const camCap = html5QrCode.getRunningTrackCameraCapabilities();
-                if (camCap.zoomFeature().isSupported() && Number(camCap.zoomFeature().value()) !== Number(zoomRangeValue)) {
-                    console.log('malkhan old value applied: ', camCap.zoomFeature().value(), zoomRangeValue);
-                    camCap.zoomFeature().apply(zoomRangeValue);
-                }
+                
                 hidePageLoader();
                 if (isChecked) {
+                    if (camCap.zoomFeature().isSupported()) {
+                        const maxZoomValue = Math.max(camCap.zoomFeature().min(), camCap.zoomFeature().max());
+                        console.log('malkhan old value applied: ', camCap.zoomFeature().value(), maxZoomValue);
+                        camCap.zoomFeature().apply(maxZoomValue);
+                    }
                     console.log('malkhan cv inputFeed: ', inputFeed);
                     isChecked = false;
                     console.log('malkhan camCap: ', camCap.zoomFeature().isSupported());
